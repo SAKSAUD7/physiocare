@@ -12,10 +12,10 @@
     "clean": "rimraf .next out",
     "build:prod": "npm run clean && next build",
     "start:prod": "next start -p 3000",
-    "export": "npm run clean && next build",
-    "predeploy": "npm run export",
+    "export": "next build && next export",
+    "predeploy": "npm run build",
     "deploy": "gh-pages -d out",
-    "deploy:all": "npm run export && npx gh-pages -d out"
+    "deploy:all": "npm run build && npx gh-pages -d out"
   },
   "dependencies": {
     "@auth/core": "^0.39.1",
@@ -53,6 +53,7 @@
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.0.3",
+    "gh-pages": "^6.3.0",
     "rimraf": "^5.0.10",
     "typescript": "^5"
   }
