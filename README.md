@@ -1,93 +1,76 @@
-# PhysioCare
+# PhysioCare - Physiotherapy Clinic Management System
 
-PhysioCare is a modern web application for physiotherapy services, allowing patients to book appointments, manage their profiles, and connect with professional physiotherapists.
+PhysioCare is a comprehensive web application designed to streamline physiotherapy clinic operations, appointments, and patient care management.
 
 ## Features
 
-- **User Authentication**: Secure login and registration system with role-based access (Admin, Doctor, Patient)
-- **Appointment Booking**: Interactive step-by-step booking process
-- **User Profiles**: Customizable profiles with avatar upload capability
-- **Service Management**: Browse various physiotherapy services
-- **Therapist Selection**: Choose from qualified professionals based on specialization
+- **User Authentication**: Secure login and signup with email/password and Google OAuth
+- **Role-Based Access**: Different dashboards and features for patients, doctors, and administrators
+- **Appointment Management**: Book, view, and manage physiotherapy appointments
+- **Treatment Plans**: Create and track patient treatment plans
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14, React, Tailwind CSS
+- **Frontend**: Next.js, React, TailwindCSS
 - **Backend**: Next.js API Routes
-- **Database**: MongoDB
-- **Authentication**: NextAuth.js
-- **Styling**: Tailwind CSS
-- **Icons**: React Icons
+- **Authentication**: NextAuth.js with Credential and Google providers
+- **Database**: MongoDB (with mock data for demonstration)
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm or yarn
-- MongoDB database
+- Node.js 14+ and npm
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/physiocare.git
+1. Clone the repository
+   ```
+   git clone https://github.com/your-username/physiocare.git
    cd physiocare
    ```
 
-2. Install dependencies:
-   ```bash
+2. Install dependencies
+   ```
    npm install
-   # or
-   yarn
    ```
 
-3. Create a `.env.local` file in the root directory with the following variables:
+3. Create a `.env.local` file with the following variables:
    ```
-   MONGODB_URI=your_mongodb_connection_string
-   NEXTAUTH_SECRET=your_nextauth_secret_key
    NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=your-secret-key-here
+   
+   # Google OAuth (optional)
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+   
+   # MongoDB (optional)
+   DATABASE_URL=your-mongodb-connection-string
    ```
 
-4. Run the development server:
-   ```bash
+4. Start the development server
+   ```
    npm run dev
-   # or
-   yarn dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Demo Accounts
 
-## Test Accounts
+The application comes with pre-configured test accounts:
 
-For testing purposes, the following accounts are available:
-
-- **Admin**:
-  - Email: admin@physiocare.com
-  - Password: admin123
-
-- **Doctor**:
-  - Email: doctor@physiocare.com
-  - Password: doctor123
-
-- **Patient**:
-  - Email: patient@physiocare.com
-  - Password: patient123
+- **Admin**: admin@physiocare.com / admin123
+- **Doctor**: doctor@physiocare.com / doctor123
+- **Patient**: patient@physiocare.com / patient123
 
 ## Deployment
 
-The application can be easily deployed on Vercel:
-
-1. Push your code to GitHub
-2. Import the project to Vercel
-3. Configure environment variables
-4. Deploy
+This application can be deployed to Vercel, Netlify, or any hosting platform that supports Next.js.
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgements
+## Acknowledgments
 
-- Images from Unsplash
-- Icons from React Icons 
+- Icons by [React-Icons](https://react-icons.github.io/react-icons/)
+- UI Components styled with [TailwindCSS](https://tailwindcss.com/) 
