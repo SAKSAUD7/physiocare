@@ -95,7 +95,7 @@ const services = [
     ],
     conditions: [
       'Stroke',
-      'Parkinson's disease',
+      'Parkinson\'s disease',
       'Multiple sclerosis',
       'Brain injury',
       'Spinal cord injury',

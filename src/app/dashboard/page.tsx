@@ -194,7 +194,7 @@ export default function DashboardPage() {
   )
 }
 
-function PatientDashboard({ appointments }) {
+function PatientDashboard({ appointments }: { appointments: any[] }) {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -299,7 +299,7 @@ function PatientDashboard({ appointments }) {
   )
 }
 
-function DoctorDashboard({ appointments }) {
+function DoctorDashboard({ appointments }: { appointments: any[] }) {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-md p-6">

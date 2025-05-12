@@ -16,13 +16,13 @@ const nextConfig = {
   // Enable production compression
   compress: true,
   
-  // Output mode
+  // Output mode - always use export for GitHub Pages
   distDir: '.next',
-  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
+  output: 'export',
   
-  // Base path for GitHub Pages (repository name) - only in production
-  basePath: process.env.NODE_ENV === 'production' ? '/physiocare' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/physiocare/' : '',
+  // Base path for GitHub Pages (repository name)
+  basePath: '/physiocare',
+  assetPrefix: '/physiocare/',
   
   // Webpack configuration
   webpack: (config, { dev, isServer }) => {
