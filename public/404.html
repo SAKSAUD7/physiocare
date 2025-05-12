@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhysioCare - Page Not Found</title>
+  <script type="text/javascript">
+    // Single Page Apps for GitHub Pages
+    // MIT License - https://github.com/rafgraph/spa-github-pages
+    var segmentCount = 1; // For GitHub project pages (username.github.io/repo-name)
+    var l = window.location;
+    
+    // Don't redirect if we're already on the 404 page
+    if (l.pathname.split('/').length > segmentCount + 1) {
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + segmentCount).join('/') + '/?p=/' +
+        l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
+    }
+  </script>
+</head>
+<body>
+  <h1>Page Not Found</h1>
+  <p>If you are not redirected automatically, follow this <a href="https://saksaud7.github.io/physiocare">link</a> to the homepage.</p>
+</body>
+</html> 

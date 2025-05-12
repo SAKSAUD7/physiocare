@@ -2,6 +2,7 @@
   "name": "physiocare",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://saksaud7.github.io/physiocare",
   "scripts": {
     "dev": "next dev",
     "dev:fast": "set NODE_OPTIONS=--max_old_space_size=4096 && next dev",
@@ -10,7 +11,11 @@
     "lint": "next lint --fix",
     "clean": "rimraf .next out",
     "build:prod": "npm run clean && next build",
-    "start:prod": "next start -p 3000"
+    "start:prod": "next start -p 3000",
+    "export": "npm run clean && next build",
+    "predeploy": "npm run export",
+    "deploy": "gh-pages -d out",
+    "deploy:all": "npm run export && npx gh-pages -d out"
   },
   "dependencies": {
     "@auth/core": "^0.39.1",

@@ -291,12 +291,12 @@ export default function ContactPage() {
             <div className="max-w-3xl mx-auto space-y-6">
               {[
                 {
-                  question: 'What areas do you serve?',
-                  answer: 'We currently provide services in [List of Areas/Cities]. If you're not sure if we cover your location, please contact us directly, and we'll be happy to check for you.'
+                  question: "What areas do you serve?",
+                  answer: "We currently provide services in [List of Areas/Cities]. If you're not sure if we cover your location, please contact us directly, and we'll be happy to check for you."
                 },
                 {
-                  question: 'How do I book an appointment?',
-                  answer: 'You can book an appointment through our online booking system, by calling our office, or by sending us a message through the contact form on this page.'
+                  question: "How do I book an appointment?", 
+                  answer: "You can book an appointment through our online booking system, by calling our office, or by sending us a message through the contact form on this page."
                 },
                 {
                   question: 'What should I prepare for a home physiotherapy session?',
