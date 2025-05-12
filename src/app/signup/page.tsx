@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { signIn } from 'next-auth/react'
 import Header from '@/components/ui/Header'
 import Footer from '@/components/ui/Footer'
+import { FaGoogle } from 'react-icons/fa'
+import { FiAlertCircle } from 'react-icons/fi'
 
 export default function SignUp() {
   const router = useRouter()
@@ -19,6 +22,7 @@ export default function SignUp() {
   })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -78,6 +82,20 @@ export default function SignUp() {
     }
   }
 
+  const handleGoogleSignUp = async () => {
+    try {
+      setGoogleLoading(true)
+      await signIn('google', { 
+        callbackUrl: '/dashboard',
+        redirect: true
+      })
+    } catch (err) {
+      console.error('Google sign up error:', err)
+      setError('An error occurred during Google sign up')
+      setGoogleLoading(false)
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -88,8 +106,9 @@ export default function SignUp() {
             <h1 className="text-2xl font-bold text-center mb-6">Create an Account</h1>
             
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4">
-                {error}
+              <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 flex items-center">
+                <FiAlertCircle className="mr-2 flex-shrink-0" />
+                <span>{error}</span>
               </div>
             )}
             
@@ -202,9 +221,44 @@ export default function SignUp() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full btn-primary flex justify-center py-2.5 px-4"
+                  className="w-full btn-primary flex justify-center items-center py-2.5 px-4"
                 >
-                  {isLoading ? 'Creating account...' : 'Sign Up'}
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                      Creating account...
+                    </>
+                  ) : (
+                    'Sign Up'
+                  )}
+                </button>
+              </div>
+
+              <div className="relative flex items-center justify-center mt-6 mb-6">
+                <div className="absolute w-full border-t border-gray-300"></div>
+                <div className="relative bg-white px-4 text-sm text-gray-500">
+                  Or continue with
+                </div>
+              </div>
+              
+              <div>
+                <button
+                  type="button"
+                  onClick={handleGoogleSignUp}
+                  disabled={googleLoading}
+                  className="w-full flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                >
+                  {googleLoading ? (
+                    <>
+                      <div className="animate-spin h-5 w-5 mr-2 border-2 border-primary-600 border-t-transparent rounded-full"></div>
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <FaGoogle className="mr-2 text-red-600" />
+                      Sign up with Google
+                    </>
+                  )}
                 </button>
               </div>
             </form>

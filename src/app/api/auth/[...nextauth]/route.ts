@@ -1,41 +1,24 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
-import { connectDB } from '@/lib/db';
-import User from '@/models/User';
 import NextAuth from 'next-auth/next';
-import bcrypt from 'bcryptjs';
+import { findUserByCredentials, findOrCreateOAuthUser, findUserByEmail } from '@/backend/services/authService';
 
-// Mock admin user for testing purposes
-const mockUsers = [
-  {
-    id: '1',
-    name: 'Admin User',
-    email: 'admin@physiocare.com',
-    password: bcrypt.hashSync('admin123', 10),
-    role: 'admin',
-  },
-  {
-    id: '2',
-    name: 'Doctor User',
-    email: 'doctor@physiocare.com',
-    password: bcrypt.hashSync('doctor123', 10),
-    role: 'doctor',
-  },
-  {
-    id: '3',
-    name: 'Patient User',
-    email: 'patient@physiocare.com',
-    password: bcrypt.hashSync('patient123', 10),
-    role: 'patient',
-  }
-];
-
-const authOptions: NextAuthOptions = {
+/**
+ * NextAuth configuration options
+ */
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || 'mock-google-client-id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'mock-google-client-secret',
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
     CredentialsProvider({
       name: 'Credentials',
@@ -48,91 +31,49 @@ const authOptions: NextAuthOptions = {
           return null;
         }
 
-        try {
-          // Try to connect to DB first
-          try {
-            await connectDB();
-            
-            // Find user by email in real database
-            const user = await User.findOne({ email: credentials.email }).select('+password');
-            
-            if (user) {
-              // Verify password
-              const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-              
-              if (isPasswordValid) {
-                return {
-                  id: user._id.toString(),
-                  name: user.name,
-                  email: user.email,
-                  role: user.role,
-                };
-              }
-            }
-          } catch (dbError) {
-            console.log('DB connection failed, using mock users', dbError);
-          }
-          
-          // If DB connection fails or user not found, use mock users
-          const mockUser = mockUsers.find(user => user.email === credentials.email);
-          
-          if (!mockUser) {
-            return null;
-          }
+        // Special handling for test accounts
+        const isTestAccount = [
+          'admin@physiocare.com',
+          'doctor@physiocare.com',
+          'patient@physiocare.com'
+        ].includes(credentials.email.toLowerCase());
 
-          // Verify password against mock user
-          const isPasswordValid = await bcrypt.compare(credentials.password, mockUser.password);
-          
-          if (!isPasswordValid) {
-            return null;
-          }
-
-          return {
-            id: mockUser.id,
-            name: mockUser.name,
-            email: mockUser.email,
-            role: mockUser.role,
-          };
-        } catch (error) {
-          console.error('Error in authorize function:', error);
-          return null;
+        if (isTestAccount) {
+          console.log('Test account login attempt:', credentials.email);
         }
+
+        // Use authentication service to validate credentials
+        const user = await findUserByCredentials(credentials.email, credentials.password);
+        
+        // Log authentication result for debugging
+        if (user) {
+          console.log('User authenticated successfully:', user.email);
+        } else {
+          console.log('Authentication failed for:', credentials.email);
+        }
+        
+        return user;
       },
     }),
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === 'google') {
+      if (account?.provider === 'google' && profile) {
         try {
-          // Try to connect to DB first
-          try {
-            await connectDB();
-            
-            // Check if the user already exists in our database
-            const existingUser = await User.findOne({ email: user.email });
-            
-            if (existingUser) {
-              // Update user information if needed
-              return true;
-            }
-            
-            // Create a new user if they don't exist
-            const newUser = new User({
-              name: user.name,
-              email: user.email,
-              password: bcrypt.hashSync(Math.random().toString(36).slice(-8), 10), // Generate random password
-              role: 'patient' // Default role
-            });
-            
-            await newUser.save();
-          } catch (dbError) {
-            console.log('DB connection failed during Google sign in', dbError);
-            // For demo purposes, we'll still allow sign in even if DB fails
-          }
+          console.log('Google sign-in attempt for:', profile.email);
           
-          return true;
+          // Use service to find or create user from OAuth profile
+          const oauthUser = await findOrCreateOAuthUser(profile);
+          
+          if (oauthUser) {
+            console.log('Google authentication successful for:', oauthUser.email);
+            return true;
+          } else {
+            console.error('Failed to process Google sign-in for:', profile.email);
+            return false;
+          }
         } catch (error) {
-          console.error('Error in signIn callback:', error);
+          console.error('Error during Google sign-in:', error);
           return false;
         }
       }
@@ -145,23 +86,23 @@ const authOptions: NextAuthOptions = {
         token.role = user.role;
       }
       
-      // If it's a Google sign-in, fetch user role from database or use mock
-      if (account?.provider === 'google') {
+      // If it's a Google sign-in, make sure we have the role
+      if (account?.provider === 'google' && token.email) {
         try {
-          try {
-            await connectDB();
-            const dbUser = await User.findOne({ email: token.email });
-            if (dbUser) {
-              token.id = dbUser._id.toString();
-              token.role = dbUser.role;
-            }
-          } catch (dbError) {
-            console.log('DB connection failed during Google auth, using default role', dbError);
-            // For demo, set a default role
+          const dbUser = await findUserByEmail(token.email as string);
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+            console.log('JWT updated with user role from DB:', dbUser.role);
+          } else {
+            // Default role for OAuth users
             token.role = 'patient';
+            console.log('Default role assigned for OAuth user:', token.email);
           }
         } catch (error) {
-          console.error('Error in jwt callback:', error);
+          console.error('Error retrieving user role for JWT:', error);
+          // Fallback to patient role
+          token.role = 'patient';
         }
       }
       
@@ -182,10 +123,15 @@ const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
     error: '/login',
+    signOut: '/',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
+  secret: process.env.NEXTAUTH_SECRET || 'physiocare-nextauth-secret-key',
+  debug: process.env.NODE_ENV === 'development',
 };
 
+/**
+ * NextAuth API handler
+ */
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

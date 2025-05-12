@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import Header from '@/components/ui/Header'
 import Footer from '@/components/ui/Footer'
-import { FiMail, FiUser, FiShield, FiUsers } from 'react-icons/fi'
+import { FiMail, FiUser, FiShield, FiUsers, FiAlertCircle, FiCheck } from 'react-icons/fi'
 import { FaGoogle } from 'react-icons/fa'
 
 export default function Login() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { status } = useSession()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -19,10 +20,18 @@ export default function Login() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
+  // Check if already authenticated and redirect
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard');
+    }
+  }, [status, router]);
+
   // Check for query parameters
   useEffect(() => {
     const registered = searchParams.get('registered')
     const emailParam = searchParams.get('email')
+    const callbackUrl = searchParams.get('callbackUrl')
     
     if (registered === 'true' && emailParam) {
       setSuccessMessage('Registration successful! Please log in with your credentials.')
@@ -34,11 +43,28 @@ export default function Login() {
     if (errorMessage) {
       if (errorMessage === 'OAuthCallback') {
         setError('Error signing in with Google. Please try again.')
+      } else if (errorMessage === 'CredentialsSignin') {
+        setError('Invalid email or password. Please try again.')
       } else {
         setError('An error occurred during sign in.')
       }
     }
   }, [searchParams])
+
+  const fillTestCredentials = (role: string) => {
+    if (role === 'admin') {
+      setEmail('admin@physiocare.com')
+      setPassword('admin123')
+    } else if (role === 'doctor') {
+      setEmail('doctor@physiocare.com')
+      setPassword('doctor123')
+    } else if (role === 'patient') {
+      setEmail('patient@physiocare.com')
+      setPassword('patient123')
+    }
+    // Clear any previous errors
+    setError('')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,7 +79,14 @@ export default function Login() {
 
     try {
       setIsLoading(true)
-
+      
+      // Special handling for test accounts
+      const isTestAccount = [
+        'admin@physiocare.com',
+        'doctor@physiocare.com',
+        'patient@physiocare.com'
+      ].includes(email.toLowerCase())
+      
       const result = await signIn('credentials', {
         redirect: false,
         email,
@@ -61,15 +94,22 @@ export default function Login() {
       })
 
       if (result?.error) {
-        setError('Invalid email or password')
+        if (isTestAccount) {
+          console.error('Test account login failed:', result.error)
+          setError('Test account login failed. Please try again with the exact credentials shown')
+        } else {
+          setError('Invalid email or password')
+        }
         return
       }
 
       if (result?.ok) {
-        router.push('/dashboard')
-        router.refresh()
+        setSuccessMessage('Login successful! Redirecting to dashboard...')
+        // Use window.location for a more reliable redirect
+        window.location.href = '/dashboard'
       }
     } catch (err) {
+      console.error('Login error:', err)
       setError('An error occurred during login')
     } finally {
       setIsLoading(false)
@@ -79,25 +119,14 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     try {
       setGoogleLoading(true)
-      await signIn('google', { callbackUrl: '/dashboard' })
+      await signIn('google', { 
+        callbackUrl: '/dashboard',
+        redirect: true
+      })
     } catch (err) {
       console.error('Google sign in error:', err)
       setError('An error occurred during Google sign in')
-    } finally {
       setGoogleLoading(false)
-    }
-  }
-
-  const fillTestCredentials = (role: string) => {
-    if (role === 'admin') {
-      setEmail('admin@physiocare.com')
-      setPassword('admin123')
-    } else if (role === 'doctor') {
-      setEmail('doctor@physiocare.com')
-      setPassword('doctor123')
-    } else if (role === 'patient') {
-      setEmail('patient@physiocare.com')
-      setPassword('patient123')
     }
   }
 
@@ -111,14 +140,16 @@ export default function Login() {
             <h1 className="text-2xl font-bold text-center mb-6">Log In</h1>
             
             {successMessage && (
-              <div className="bg-green-50 text-green-600 p-3 rounded-md mb-4">
-                {successMessage}
+              <div className="bg-green-50 text-green-600 p-3 rounded-md mb-4 flex items-center">
+                <FiCheck className="mr-2 flex-shrink-0" />
+                <span>{successMessage}</span>
               </div>
             )}
             
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4">
-                {error}
+              <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 flex items-center">
+                <FiAlertCircle className="mr-2 flex-shrink-0" />
+                <span>{error}</span>
               </div>
             )}
             
@@ -222,7 +253,12 @@ export default function Login() {
                   disabled={isLoading}
                   className="w-full btn-primary flex justify-center items-center py-2.5 px-4"
                 >
-                  {isLoading ? 'Logging in...' : (
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                      Logging in...
+                    </>
+                  ) : (
                     <>
                       <FiMail className="mr-2" />
                       Log In with Email
@@ -245,8 +281,17 @@ export default function Login() {
                   disabled={googleLoading}
                   className="w-full flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 >
-                  <FaGoogle className="mr-2 text-red-600" />
-                  {googleLoading ? 'Connecting...' : 'Sign in with Google'}
+                  {googleLoading ? (
+                    <>
+                      <div className="animate-spin h-5 w-5 mr-2 border-2 border-primary-600 border-t-transparent rounded-full"></div>
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <FaGoogle className="mr-2 text-red-600" />
+                      Sign in with Google
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -254,8 +299,8 @@ export default function Login() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{' '}
-                <Link href="/signup" className="text-primary-600 hover:text-primary-700 font-medium">
-                  Sign up
+                <Link href="/signup" className="text-primary-600 font-medium hover:text-primary-700">
+                  Sign up now
                 </Link>
               </p>
             </div>

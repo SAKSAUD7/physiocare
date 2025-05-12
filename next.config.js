@@ -3,26 +3,34 @@ const nextConfig = {
   // Performance optimizations
   reactStrictMode: true,
   swcMinify: true,
+  productionBrowserSourceMaps: false, // Disable source maps in production for better performance
   
   // Image configuration
   images: {
     domains: ['res.cloudinary.com', 'images.unsplash.com', 'upload.wikimedia.org'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
     formats: ['image/webp'],
-    unoptimized: true,
+    minimumCacheTTL: 60, // Cache images for at least 60 seconds
   },
   
   // Enable production compression
   compress: true,
   
-  // Output mode - always use export for GitHub Pages
+  // Only use static export in production, not in development
   distDir: '.next',
-  output: 'export',
+  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
   
-  // Base path for GitHub Pages (repository name)
-  basePath: '/physiocare',
-  assetPrefix: '/physiocare/',
+  // Fix the basePath and assetPrefix for both dev and production (removing these if causing issues)
+  // basePath: process.env.NODE_ENV === 'production' ? '/physiocare' : '',
+  // assetPrefix: process.env.NODE_ENV === 'production' ? '/physiocare/' : '',
+
+  // Experimental features for better performance
+  experimental: {
+    optimizeCss: true, // Enable CSS optimization
+    scrollRestoration: true, // Better scroll experience
+    optimizeServerReact: true, // Optimize server-rendered React
+  },
   
   // Webpack configuration
   webpack: (config, { dev, isServer }) => {
@@ -34,11 +42,20 @@ const nextConfig = {
           commons: {
             name: 'commons',
             chunks: 'all',
-            minChunks: 5,
+            minChunks: 3,
+            priority: 20,
           },
-          vendors: false,
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+            priority: 10,
+          },
         },
       };
+
+      // Add terser config to reduce bundle size
+      config.optimization.minimize = true;
     }
     return config;
   },
