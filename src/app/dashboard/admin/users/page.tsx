@@ -24,6 +24,17 @@ import {
   createEmailLink 
 } from '@/utils/exportHelpers'
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  phone?: string;
+  address?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Mock users for the UI (we'll replace with API call in a real app)
 const mockUsers = [
   {
@@ -89,7 +100,7 @@ export default function AdminUsersPage() {
   const [exportFormat, setExportFormat] = useState('csv')
   const [showExportOptions, setShowExportOptions] = useState(false)
   const [exportSuccess, setExportSuccess] = useState(false)
-  const [selectedUser, setSelectedUser] = useState(null)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   
   // Check if user is admin
@@ -111,25 +122,27 @@ export default function AdminUsersPage() {
     return matchesSearch && matchesRole
   })
   
-  const handleViewUser = (user) => {
+  const handleViewUser = (user: User) => {
     setSelectedUser(user)
     setIsEditing(false)
   }
   
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: User) => {
     setSelectedUser(user)
     setIsEditing(true)
   }
   
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = (userId: string) => {
     setUsers(users.filter(user => user.id !== userId))
     setSelectedUser(null)
   }
   
-  const handleSaveUser = (updatedUser) => {
-    setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user))
-    setSelectedUser(null)
+  const handleSaveUser = (updatedUser: User) => {
+    setUsers(users.map(user => 
+      user.id === updatedUser.id ? updatedUser : user
+    ))
     setIsEditing(false)
+    setSelectedUser(null)
   }
   
   const handleExport = () => {

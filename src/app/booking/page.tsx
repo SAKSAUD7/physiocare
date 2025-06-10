@@ -157,6 +157,12 @@ export default function BookingPage() {
     }
   }, [searchParams])
   
+  useEffect(() => {
+    if (selectedService) {
+      filterDoctorsByService(selectedService);
+    }
+  }, [selectedService, filterDoctorsByService]);
+  
   const filterDoctorsByService = (serviceId: string) => {
     if (!serviceId) {
       setAvailableDoctors(doctors)
