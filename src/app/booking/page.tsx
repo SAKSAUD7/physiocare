@@ -1,12 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { format, addDays, startOfDay } from 'date-fns'
 import { FiCalendar, FiClock, FiMapPin, FiDollarSign, FiChevronRight, FiCheck, FiAlertCircle, FiUser, FiClipboard } from 'react-icons/fi'
 import Header from '@/components/ui/Header'
 import Footer from '@/components/ui/Footer'
+
+interface Service {
+  id: number;
+  name: string;
+  price: number;
+  duration: number;
+  description: string;
+}
+
+interface Doctor {
+  id: number;
+  name: string;
+  specialization: string;
+  experience: number;
+  rating: number;
+  image: string;
+  availableServices: number[];
+}
 
 // Mock data - in a real app, this would come from the database
 const services = [
@@ -127,7 +145,7 @@ export default function BookingPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [formError, setFormError] = useState('')
-  const [availableDoctors, setAvailableDoctors] = useState(doctors)
+  const [availableDoctors, setAvailableDoctors] = useState<Doctor[]>(doctors)
   const [formData, setFormData] = useState({
     service: '',
     doctor: '',
@@ -143,27 +161,8 @@ export default function BookingPage() {
     notes: '',
   })
   
-  // Check for query parameters for pre-selecting service
-  useEffect(() => {
-    const serviceId = searchParams.get('service')
-    if (serviceId) {
-      setFormData(prev => ({
-        ...prev,
-        service: serviceId
-      }))
-      
-      // Filter doctors based on selected service
-      filterDoctorsByService(serviceId)
-    }
-  }, [searchParams])
-  
-  useEffect(() => {
-    if (selectedService) {
-      filterDoctorsByService(selectedService);
-    }
-  }, [selectedService, filterDoctorsByService]);
-  
-  const filterDoctorsByService = (serviceId: string) => {
+  // Memoize the filterDoctorsByService function
+  const filterDoctorsByService = useCallback((serviceId: string) => {
     if (!serviceId) {
       setAvailableDoctors(doctors)
       return
@@ -185,7 +184,27 @@ export default function BookingPage() {
         doctor: ''
       }))
     }
-  }
+  }, [formData.doctor])
+  
+  // Check for query parameters for pre-selecting service
+  useEffect(() => {
+    const serviceId = searchParams.get('service')
+    if (serviceId) {
+      setFormData(prev => ({
+        ...prev,
+        service: serviceId
+      }))
+      
+      // Filter doctors based on selected service
+      filterDoctorsByService(serviceId)
+    }
+  }, [searchParams, filterDoctorsByService])
+  
+  useEffect(() => {
+    if (formData.service) {
+      filterDoctorsByService(formData.service)
+    }
+  }, [formData.service, filterDoctorsByService])
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -193,11 +212,6 @@ export default function BookingPage() {
       ...prev,
       [name]: value
     }))
-    
-    // Filter available doctors when service changes
-    if (name === 'service') {
-      filterDoctorsByService(value)
-    }
   }
   
   const handleSubmit = async (e: React.FormEvent) => {
