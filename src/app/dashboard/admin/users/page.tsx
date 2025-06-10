@@ -89,6 +89,8 @@ export default function AdminUsersPage() {
   const [exportFormat, setExportFormat] = useState('csv')
   const [showExportOptions, setShowExportOptions] = useState(false)
   const [exportSuccess, setExportSuccess] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [isEditing, setIsEditing] = useState(false)
   
   // Check if user is admin
   useEffect(() => {
@@ -108,6 +110,27 @@ export default function AdminUsersPage() {
     
     return matchesSearch && matchesRole
   })
+  
+  const handleViewUser = (user) => {
+    setSelectedUser(user)
+    setIsEditing(false)
+  }
+  
+  const handleEditUser = (user) => {
+    setSelectedUser(user)
+    setIsEditing(true)
+  }
+  
+  const handleDeleteUser = (userId) => {
+    setUsers(users.filter(user => user.id !== userId))
+    setSelectedUser(null)
+  }
+  
+  const handleSaveUser = (updatedUser) => {
+    setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user))
+    setSelectedUser(null)
+    setIsEditing(false)
+  }
   
   const handleExport = () => {
     // In a real app, we'd fetch from the API

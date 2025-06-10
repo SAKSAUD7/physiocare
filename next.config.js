@@ -2,7 +2,7 @@
 
 // Use this configuration for GitHub Pages
 const nextConfig = {
-  output: 'export', // Enables static export
+  // output: 'export', // Enables static export
   basePath: process.env.NODE_ENV === 'production' ? '/physiocare' : '',
   images: {
     unoptimized: true, // Required for static export

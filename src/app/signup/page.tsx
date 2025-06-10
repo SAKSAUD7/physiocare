@@ -19,6 +19,8 @@ export default function SignUp() {
     role: 'patient',
     phone: '',
     address: '',
+    problem: '',
+    problemDetails: '',
   })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -64,6 +66,8 @@ export default function SignUp() {
           role: formData.role,
           phone: formData.phone,
           address: formData.address,
+          problem: formData.problem,
+          problemDetails: formData.problemDetails,
         }),
       })
 
@@ -216,6 +220,60 @@ export default function SignUp() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
+              
+              <div>
+                <label htmlFor="profilePhoto" className="block text-sm font-medium text-gray-700 mb-1">
+                  Upload Profile Photo
+                </label>
+                <input
+                  id="profilePhoto"
+                  name="profilePhoto"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              
+              {formData.role === 'patient' && (
+                <>
+                  <div>
+                    <label htmlFor="problem" className="block text-sm font-medium text-gray-700 mb-1">
+                      Select Physiotherapy Problem
+                    </label>
+                    <select
+                      id="problem"
+                      name="problem"
+                      value={formData.problem}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="">Select a problem</option>
+                      <option value="back_pain">Back Pain</option>
+                      <option value="knee_pain">Knee Pain</option>
+                      <option value="shoulder_pain">Shoulder Pain</option>
+                      <option value="neck_pain">Neck Pain</option>
+                      <option value="ankle_pain">Ankle Pain</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  {formData.problem === 'other' && (
+                    <div>
+                      <label htmlFor="problemDetails" className="block text-sm font-medium text-gray-700 mb-1">
+                        Describe Your Problem
+                      </label>
+                      <textarea
+                        id="problemDetails"
+                        name="problemDetails"
+                        value={formData.problemDetails}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        rows={4}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
               
               <div>
                 <button
