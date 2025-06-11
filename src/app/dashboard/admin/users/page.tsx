@@ -29,14 +29,14 @@ interface User {
   name: string;
   email: string;
   role: string;
-  phone?: string;
-  address?: string;
+  phone: string;
+  address: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 // Mock users for the UI (we'll replace with API call in a real app)
-const mockUsers = [
+const mockUsers: User[] = [
   {
     id: '1',
     name: 'Admin User',
@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
   
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
-  const [users, setUsers] = useState(mockUsers)
+  const [users, setUsers] = useState<User[]>(mockUsers)
   const [loading, setLoading] = useState(false)
   const [exportFormat, setExportFormat] = useState('csv')
   const [showExportOptions, setShowExportOptions] = useState(false)
@@ -115,7 +115,7 @@ export default function AdminUsersPage() {
     const matchesSearch = 
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.phone && user.phone.toLowerCase().includes(searchTerm.toLowerCase()))
+      user.phone.toLowerCase().includes(searchTerm.toLowerCase())
     
     const matchesRole = roleFilter === 'all' || user.role === roleFilter
     
