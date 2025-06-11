@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { connectDB } from '@/lib/db';
 import { Parser } from 'json2csv';
+import Appointment from '@/models/Appointment';
 
 // Mock appointments for testing (since we don't have a real DB connection)
 const mockAppointments = [
@@ -62,64 +63,18 @@ const mockAppointments = [
   },
 ];
 
-export async function GET(request: NextRequest) {
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
   try {
-    // Get the format from query parameters
-    const { searchParams } = new URL(request.url);
-    const format = searchParams.get('format') || 'json';
-    const status = searchParams.get('status');
+    await connectDB();
     
-    // Check authentication and authorization
-    const session = await getServerSession();
+    const appointments = await Appointment.find({})
+      .populate('patient', 'name email')
+      .populate('doctor', 'name email')
+      .lean();
     
-    if (!session || session.user?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized. Only admins can access this endpoint.' },
-        { status: 403 }
-      );
-    }
-    
-    let appointments;
-    
-    // Try to fetch appointments from database (this would be the real implementation)
-    try {
-      await connectDB();
-      // In a real app, this would query the Appointment model
-      // appointments = await Appointment.find(status ? { status } : {}).populate('doctor').populate('patient').lean();
-      
-      // For now, use mock data
-      appointments = status 
-        ? mockAppointments.filter(appt => appt.status === status) 
-        : mockAppointments;
-    } catch (error) {
-      console.error('Database error, using mock data:', error);
-      // If DB connection fails, use mock data
-      appointments = status 
-        ? mockAppointments.filter(appt => appt.status === status) 
-        : mockAppointments;
-    }
-    
-    // Format data based on requested format
-    switch (format) {
-      case 'csv': {
-        // Convert to CSV
-        const fields = ['id', 'service', 'doctor', 'patient', 'patientEmail', 'date', 'time', 'status', 'createdAt'];
-        const json2csvParser = new Parser({ fields });
-        const csv = json2csvParser.parse(appointments);
-        
-        // Return CSV as attachment
-        return new NextResponse(csv, {
-          headers: {
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename=appointments.csv',
-          },
-        });
-      }
-      
-      case 'json':
-      default:
-        return NextResponse.json({ appointments });
-    }
+    return NextResponse.json({ appointments });
   } catch (error) {
     console.error('Error exporting appointments:', error);
     return NextResponse.json(

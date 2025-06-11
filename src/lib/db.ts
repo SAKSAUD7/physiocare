@@ -27,56 +27,28 @@ if (!global.mongoose) {
 }
 
 export async function connectDB() {
-  // If we already have a connection, return it
-  if (cached.conn && mongoose.connection.readyState === 1) {
-    console.log('Using existing MongoDB connection');
+  if (cached.conn) {
     return cached.conn;
-  }
-
-  // If connection state is connecting or disconnecting, wait a moment and reset
-  if (mongoose.connection.readyState === 2 || mongoose.connection.readyState === 3) {
-    console.log('MongoDB connection in transition, waiting briefly...');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    cached.promise = null;
   }
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: true,
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 15000, // Increased timeout
-      socketTimeoutMS: 45000,
-      family: 4
+      bufferCommands: false,
     };
 
-    try {
-      console.log('Initiating new MongoDB connection with updated credentials...');
-      cached.promise = mongoose.connect(MONGODB_URI, opts)
-        .then((mongoose) => {
-          console.log('Successfully connected to MongoDB Atlas');
-          return mongoose;
-        })
-        .catch((err) => {
-          console.error('MongoDB connection error - falling back to mock data:', err.message);
-          cached.promise = null;
-          throw err; // Rethrow to ensure proper error handling
-        });
-    } catch (error) {
-      console.error('Unexpected error during MongoDB connection:', error);
-      cached.promise = null;
-      throw error; // Rethrow to ensure proper error handling
-    }
+    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+      return mongoose;
+    });
   }
 
   try {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    console.error('MongoDB connection error in cached.conn:', e);
-    // Even if connection fails, return mongoose for fallback to mock data
+    throw e;
   }
 
-  return cached.conn || mongoose;
+  return cached.conn;
 }
 
 // Helper function to check if MongoDB is connected
@@ -86,11 +58,10 @@ export function isConnected() {
 
 // Helper function to gracefully disconnect from MongoDB
 export async function disconnectDB() {
-  if (mongoose.connection.readyState === 1) {
+  if (cached.conn) {
     await mongoose.disconnect();
     cached.conn = null;
     cached.promise = null;
-    console.log('Disconnected from MongoDB Atlas');
   }
 }
 
@@ -109,4 +80,18 @@ export async function testConnection() {
     console.error('MongoDB connection test failed with error:', error);
     return false;
   }
-} 
+}
+
+// Handle connection errors
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+process.on('SIGINT', async () => {
+  await disconnectDB();
+  process.exit(0);
+}); 
